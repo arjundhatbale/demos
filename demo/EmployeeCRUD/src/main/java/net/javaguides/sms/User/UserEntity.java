@@ -1,7 +1,12 @@
 package net.javaguides.sms.User;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -10,6 +15,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -18,10 +26,11 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.javaguides.sms.post.Post;
+import net.javaguides.sms.secutiry.Role;
 
 @Entity
 @Table(name="user_entity")
-public class UserEntity {
+public class UserEntity implements UserDetails {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,13 +57,18 @@ public class UserEntity {
 	@OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL,fetch = FetchType.LAZY )
 	private Set<Post> post = new HashSet<>();
 	
+	@ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
+	@JoinTable(name="user_role",joinColumns = @JoinColumn(name="user",referencedColumnName = "user_Id" ),inverseJoinColumns = @JoinColumn(name="Role",referencedColumnName = "id") )
+	private Set<Role> roles = new HashSet<>();
+	
 	public UserEntity() {
 		super();
 	}
 
 	public UserEntity(int userId,
 			@NotNull @Size(min = 4, message = "user name must be minimum 4 charactor") String userName,
-			@NotNull String password, @NotNull @Email String email, @NotNull String about, Set<Post> post) {
+			@NotNull String password, @NotNull @Email String email, @NotNull String about, Set<Post> post,
+			Set<Role> roles) {
 		super();
 		this.userId = userId;
 		this.userName = userName;
@@ -62,6 +76,7 @@ public class UserEntity {
 		this.email = email;
 		this.about = about;
 		this.post = post;
+		this.roles = roles;
 	}
 
 	public int getUserId() {
@@ -112,10 +127,54 @@ public class UserEntity {
 		this.post = post;
 	}
 
+	public Set<Role> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(Set<Role> roles) {
+		this.roles = roles;
+	}
+
 	@Override
 	public String toString() {
 		return "UserEntity [userId=" + userId + ", userName=" + userName + ", password=" + password + ", email=" + email
-				+ ", about=" + about + ", post=" + post + "]";
+				+ ", about=" + about + ", post=" + post + ", roles=" + roles + "]";
+	}
+
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getUsername() {
+		// TODO Auto-generated method stub
+		return  this.email;
+	}
+
+	@Override
+	public boolean isAccountNonExpired() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		// TODO Auto-generated method stub
+		return  true;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		// TODO Auto-generated method stub
+		return  true;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		// TODO Auto-generated method stub
+		return  true;
 	}
  
 }
